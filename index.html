@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privy Login Widget</title>
-  <script src="https://auth.privy.io/script.js"></script>
+  <script defer src="https://auth.privy.io/script.js"></script>
   <style>
     body {
       background: #0a0a0a;
@@ -39,28 +39,32 @@
   <div id="privy-container"></div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const privy = new Privy({ appId: "cm9ja1fsw00mpie0na7ikxm7a" });
+    window.addEventListener('load', function() {
+      if (typeof Privy !== 'undefined') {
+        const privy = new Privy({ appId: "cm9ja1fsw00mpie0na7ikxm7a" });
 
-      const loginBtn = document.getElementById("privy-login-btn");
-      const logoutBtn = document.getElementById("privy-logout-btn");
+        const loginBtn = document.getElementById("privy-login-btn");
+        const logoutBtn = document.getElementById("privy-logout-btn");
 
-      loginBtn.onclick = () => privy.login()
-        .then(user => console.log("✅ Logged in!", user))
-        .catch(err => console.error("❌ Login failed:", err));
+        loginBtn.onclick = () => privy.login()
+          .then(user => console.log("✅ Logged in!", user))
+          .catch(err => console.error("❌ Login failed:", err));
 
-      logoutBtn.onclick = () => privy.logout();
+        logoutBtn.onclick = () => privy.logout();
 
-      privy.on("user", (user) => {
-        if (user) {
-          loginBtn.style.display = "none";
-          logoutBtn.style.display = "inline-block";
-          console.log("👤 Logged in:", user);
-        } else {
-          loginBtn.style.display = "inline-block";
-          logoutBtn.style.display = "none";
-        }
-      });
+        privy.on("user", (user) => {
+          if (user) {
+            loginBtn.style.display = "none";
+            logoutBtn.style.display = "inline-block";
+            console.log("👤 Logged in:", user);
+          } else {
+            loginBtn.style.display = "inline-block";
+            logoutBtn.style.display = "none";
+          }
+        });
+      } else {
+        console.error("Privy script failed to load");
+      }
     });
   </script>
 </body>
