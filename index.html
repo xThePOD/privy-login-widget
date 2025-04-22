@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privy Login Widget</title>
-  <script defer src="https://auth.privy.io/script.js"></script>
+  <script async src="https://auth.privy.io/script.js"></script>
   <style>
     body {
       background: #0a0a0a;
@@ -39,8 +39,9 @@
   <div id="privy-container"></div>
 
   <script>
-    window.addEventListener('load', function() {
-      if (typeof Privy !== 'undefined') {
+    // Function to initialize Privy
+    function initPrivy() {
+      try {
         const privy = new Privy({ appId: "cm9ja1fsw00mpie0na7ikxm7a" });
 
         const loginBtn = document.getElementById("privy-login-btn");
@@ -62,10 +63,24 @@
             logoutBtn.style.display = "none";
           }
         });
-      } else {
-        console.error("Privy script failed to load");
+      } catch (error) {
+        console.error("Error initializing Privy:", error);
       }
-    });
+    }
+
+    // Check if Privy is loaded every 100ms for up to 5 seconds
+    let attempts = 0;
+    const maxAttempts = 50;
+    const checkPrivy = setInterval(() => {
+      if (typeof Privy !== 'undefined') {
+        clearInterval(checkPrivy);
+        initPrivy();
+      } else if (attempts >= maxAttempts) {
+        clearInterval(checkPrivy);
+        console.error("Failed to load Privy after 5 seconds");
+      }
+      attempts++;
+    }, 100);
   </script>
 </body>
 </html>
