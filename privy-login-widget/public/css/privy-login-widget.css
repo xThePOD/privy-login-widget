@@ -1,0 +1,49 @@
+.privy-login-widget-container {
+    text-align: center;
+    padding: 1rem;
+}
+
+.privy-login-widget-button {
+    display: inline-block;
+    background: #0f62fe;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 28px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px rgba(15, 98, 254, 0.2);
+    text-decoration: none;
+}
+
+.privy-login-widget-button:hover {
+    background: #0051e6;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(15, 98, 254, 0.3);
+}
+
+.privy-login-widget-button:active {
+    transform: translateY(0);
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+    .privy-login-widget-button {
+        background: #0f62fe;
+        color: white;
+    }
+
+    .privy-login-widget-button:hover {
+        background: #0051e6;
+    }
+}
+
+/* Responsive design */
+@media screen and (max-width: 600px) {
+    .privy-login-widget-button {
+        padding: 12px 24px;
+        font-size: 1rem;
+    }
+} 

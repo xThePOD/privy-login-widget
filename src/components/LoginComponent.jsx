@@ -4,23 +4,36 @@ function LoginComponent() {
   const { login, logout, authenticated, user, ready } = usePrivy();
 
   if (!ready) {
-    return <div>Loading...</div>;
+    return (
+      <div className="login-wrapper">
+        <div className="loading-spinner">Loading...</div>
+      </div>
+    );
   }
 
   return (
     <div className="login-wrapper">
       {!authenticated ? (
-        <button 
-          className="privy-button" 
-          onClick={login}
-        >
-          Log in with Privy
-        </button>
+        <div className="login-container">
+          <h1 className="login-title">Welcome to Our App</h1>
+          <p className="login-subtitle">Please log in to continue</p>
+          <button 
+            className="privy-button" 
+            onClick={login}
+          >
+            Log in with Privy
+          </button>
+        </div>
       ) : (
         <div className="authenticated-container">
-          <p className="user-info">
-            Welcome, {user?.email || 'User'}!
-          </p>
+          <div className="user-profile">
+            <h2 className="user-info">
+              Welcome, {user?.email || 'User'}!
+            </h2>
+            {user?.email && (
+              <p className="user-email">{user.email}</p>
+            )}
+          </div>
           <button 
             className="privy-button logout"
             onClick={logout}
