@@ -15,60 +15,65 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Define plugin constants
-define('PRIVY_LOGIN_WIDGET_VERSION', '1.0.0');
-define('PRIVY_LOGIN_WIDGET_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('PRIVY_LOGIN_WIDGET_PLUGIN_URL', plugin_dir_url(__FILE__));
+// Include the widget class
+require_once plugin_dir_path(__FILE__) . 'includes/class-privy-login-widget.php';
 
-// Enqueue scripts and styles
-function privy_login_enqueue_scripts() {
-    // Enqueue the Privy widget script
-    wp_enqueue_script(
-        'privy-login-widget',
-        PRIVY_LOGIN_WIDGET_PLUGIN_URL . 'js/privy-login-widget.js',
-        array(),
-        PRIVY_LOGIN_WIDGET_VERSION,
-        true
-    );
-
-    // Get the App ID from WordPress options
-    $app_id = get_option('privy_app_id', '');
-    if (empty($app_id)) {
-        error_log('Privy Login Widget: App ID is not configured');
-        return;
-    }
-    
-    // Initialize the widget with WordPress-specific configuration
-    wp_add_inline_script('privy-login-widget', '
-        document.addEventListener("DOMContentLoaded", function() {
-            if (document.getElementById("privy-login")) {
-                new PrivyLoginWidget({
-                    appId: "' . esc_js($app_id) . '",
-                    containerId: "privy-login",
-                    buttonText: "Connect Wallet",
-                    theme: "dark",
-                    loginMethods: ["email", "wallet"]
-                });
-            }
-        });
-    ');
+// Register the widget
+function register_privy_login_widget() {
+    register_widget('Privy_Login_Widget');
 }
-add_action('wp_enqueue_scripts', 'privy_login_enqueue_scripts');
+add_action('widgets_init', 'register_privy_login_widget');
 
 // Add shortcode support
 function privy_login_shortcode($atts) {
+    // Merge default attributes with user attributes
     $atts = shortcode_atts(array(
         'button_text' => 'Connect Wallet',
-        'theme' => 'dark',
+        'theme' => 'dark'
     ), $atts);
 
-    return sprintf(
-        '<div id="privy-login" data-button-text="%s" data-theme="%s"></div>',
-        esc_attr($atts['button_text']),
-        esc_attr($atts['theme'])
-    );
+    // Generate a unique ID for this instance
+    static $instance = 0;
+    $instance++;
+    $widget_id = 'privy-login-' . $instance;
+
+    // Get the App ID
+    $app_id = get_option('privy_app_id', '');
+    if (empty($app_id)) {
+        return '<p style="color: red;">' . __('Please configure your Privy App ID in the plugin settings.', 'privy-login-widget') . '</p>';
+    }
+
+    // Start output buffering
+    ob_start();
+    ?>
+    <div id="<?php echo esc_attr($widget_id); ?>" class="privy-login-container"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            new PrivyLoginWidget({
+                appId: '<?php echo esc_js($app_id); ?>',
+                containerId: '<?php echo esc_js($widget_id); ?>',
+                buttonText: '<?php echo esc_js($atts['button_text']); ?>',
+                theme: '<?php echo esc_js($atts['theme']); ?>',
+                loginMethods: ['email', 'wallet']
+            });
+        });
+    </script>
+    <?php
+    return ob_get_clean();
 }
 add_shortcode('privy_login', 'privy_login_shortcode');
+
+// Enqueue scripts
+function privy_login_enqueue_scripts() {
+    wp_enqueue_script(
+        'privy-login-widget',
+        plugins_url('js/privy-login-widget.js', __FILE__),
+        array(),
+        '1.0.0',
+        true
+    );
+}
+add_action('wp_enqueue_scripts', 'privy_login_enqueue_scripts');
 
 // Add settings page
 function privy_login_add_settings_page() {
@@ -82,53 +87,37 @@ function privy_login_add_settings_page() {
 }
 add_action('admin_menu', 'privy_login_add_settings_page');
 
-// Register plugin settings
-function privy_login_register_settings() {
-    register_setting('privy_login_settings', 'privy_app_id', array(
-        'type' => 'string',
-        'sanitize_callback' => 'sanitize_text_field',
-        'default' => ''
-    ));
-}
-add_action('admin_init', 'privy_login_register_settings');
-
 // Create the settings page
 function privy_login_settings_page() {
-    // Check user capabilities
     if (!current_user_can('manage_options')) {
         return;
     }
 
-    // Save settings if posted
     if (isset($_POST['privy_app_id'])) {
         check_admin_referer('privy_login_settings');
         update_option('privy_app_id', sanitize_text_field($_POST['privy_app_id']));
-        echo '<div class="updated"><p>' . esc_html__('Settings saved.', 'privy-login-widget') . '</p></div>';
+        echo '<div class="updated"><p>' . __('Settings saved.', 'privy-login-widget') . '</p></div>';
     }
 
     $app_id = get_option('privy_app_id', '');
     ?>
     <div class="wrap">
         <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-        <form method="post" action="">
+        <form method="post">
             <?php wp_nonce_field('privy_login_settings'); ?>
-            <table class="form-table" role="presentation">
+            <table class="form-table">
                 <tr>
                     <th scope="row">
-                        <label for="privy_app_id"><?php esc_html_e('Privy App ID', 'privy-login-widget'); ?></label>
+                        <label for="privy_app_id"><?php _e('Privy App ID', 'privy-login-widget'); ?></label>
                     </th>
                     <td>
                         <input type="text" 
                                id="privy_app_id"
                                name="privy_app_id" 
                                value="<?php echo esc_attr($app_id); ?>" 
-                               class="regular-text"
-                               required>
+                               class="regular-text">
                         <p class="description">
-                            <?php esc_html_e('Enter your Privy App ID from your Privy dashboard.', 'privy-login-widget'); ?>
-                            <a href="https://console.privy.io" target="_blank" rel="noopener noreferrer">
-                                <?php esc_html_e('Get your App ID', 'privy-login-widget'); ?>
-                            </a>
+                            <?php _e('Enter your Privy App ID from your Privy dashboard.', 'privy-login-widget'); ?>
                         </p>
                     </td>
                 </tr>
