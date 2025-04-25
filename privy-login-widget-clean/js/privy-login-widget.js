@@ -105,10 +105,19 @@
 
             return new Promise((resolve, reject) => {
                 const script = document.createElement('script');
-                script.src = 'https://privy.io/sdk.js';
+                script.src = 'https://sdk.privy.io/privy.js';
                 script.async = true;
-                script.onload = resolve;
-                script.onerror = (error) => reject(new Error('Failed to load Privy SDK: ' + error));
+                script.onload = () => {
+                    if (window.Privy) {
+                        resolve();
+                    } else {
+                        reject(new Error('Privy SDK failed to initialize properly'));
+                    }
+                };
+                script.onerror = (error) => {
+                    console.error('Failed to load Privy SDK:', error);
+                    reject(new Error('Failed to load Privy SDK'));
+                };
                 document.head.appendChild(script);
             });
         }

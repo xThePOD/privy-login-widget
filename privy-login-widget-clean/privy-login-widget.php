@@ -66,12 +66,28 @@ add_shortcode('privy_login', 'privy_login_shortcode');
 // Enqueue scripts
 function privy_login_enqueue_scripts() {
     wp_enqueue_script(
-        'privy-login-widget',
-        plugins_url('js/privy-login-widget.js', __FILE__),
+        'privy-sdk',
+        'https://sdk.privy.io/privy.js',
         array(),
         '1.0.0',
         true
     );
+
+    wp_enqueue_script(
+        'privy-login-widget',
+        plugins_url('js/privy-login-widget.js', __FILE__),
+        array('privy-sdk'),
+        '1.0.0',
+        true
+    );
+
+    // Localize the script with your app ID
+    $app_id = get_option('privy_app_id', '');
+    wp_localize_script('privy-login-widget', 'privyConfig', array(
+        'appId' => $app_id,
+        'loginMethods' => array('email', 'wallet'),
+        'theme' => 'dark'
+    ));
 }
 add_action('wp_enqueue_scripts', 'privy_login_enqueue_scripts');
 
